@@ -1,10 +1,12 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import ProjectCard from '../components/ProjectCard';
 import Input from '../components/Input';
 import Button from '../components/Button';
 
 export default function Dashboard() {
+    const router = useRouter();
     const [user, setUser] = useState(null);
     const [tab, setTab] = useState("profile");
     const [form, setForm] = useState({ u_name: "", email: "", password: "" });
@@ -61,6 +63,29 @@ export default function Dashboard() {
         }
     };
 
+    const handleDeleteProfile = async () => {
+        if (!user) return;
+
+        const confirmed = confirm("Are you sure you want to delete your profile? This action cannot be undone and will delete all your projects.");
+        if (!confirmed) return;
+
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${user.id}?code=${process.env.NEXT_PUBLIC_API_KEY}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                localStorage.removeItem('code101-user');
+                router.push('/');
+            } else {
+                const data = await res.json();
+                throw new Error(data.error || 'Failed to delete profile');
+            }
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
     const handleProjectSubmit = async (e) => {
         e.preventDefault();
         if (!user) return alert("Sign in required.");
@@ -88,6 +113,26 @@ export default function Dashboard() {
         }
     };
 
+    const handleDeleteProject = async (projectId) => {
+        const confirmed = confirm("Are you sure you want to delete this project?");
+        if (!confirmed) return;
+
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/projects/${projectId}?code=${process.env.NEXT_PUBLIC_API_KEY}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                setProjects(prev => prev.filter(p => p.p_id !== projectId));
+            } else {
+                const data = await res.json();
+                throw new Error(data.error || 'Failed to delete project');
+            }
+        } catch (err) {
+            alert(err.message);
+        }
+    };
+
     const toggleProjectVisibility = (index) => {
         setProjects(prev => {
             const copy = [...prev];
@@ -107,15 +152,18 @@ export default function Dashboard() {
             </div>
 
             {tab === "profile" && (
-                <form onSubmit={handleUserUpdate} className="dashboard-tab-content">
-                    <h2 className="page-heading" style={{ fontSize: "1.8rem" }}>Update Profile</h2>
-                    <Input label="Username" value={form.u_name} onChange={e => setForm({ ...form, u_name: e.target.value })} />
-                    <Input label="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
-                    <Input label="New Password" type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
-                    <div style={{ textAlign: "center" }}>
-                        <Button type="submit">Save Changes</Button>
-                    </div>
-                </form>
+                <div className="dashboard-tab-content">
+                    <form onSubmit={handleUserUpdate} className="dashboard-form">
+                        <h2 className="page-heading" style={{ fontSize: "1.8rem" }}>Update Profile</h2>
+                        <Input label="Username" value={form.u_name} onChange={e => setForm({ ...form, u_name: e.target.value })} />
+                        <Input label="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+                        <Input label="New Password" type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
+                        <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                            <Button type="submit">Save Changes</Button>
+                            <Button type="button" color="red" onClick={handleDeleteProfile}>Delete Profile</Button>
+                        </div>
+                    </form>
+                </div>
             )}
 
             {tab === "projects" && (
@@ -134,6 +182,9 @@ export default function Dashboard() {
                                         Status: {p.approval || "pending"} •
                                         <button className="hide-btn" onClick={() => toggleProjectVisibility(i)}>
                                             {p.hidden ? "Unhide" : "Hide"}
+                                        </button>
+                                        <button className="delete-btn" onClick={() => handleDeleteProject(p.p_id)}>
+                                            Delete
                                         </button>
                                     </div>
                                 </div>

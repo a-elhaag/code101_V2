@@ -57,31 +57,67 @@ export default function Discussion({ discussion, currentUser, onUpdate, onDelete
     );
 
     return (
-        <div className="discussion-item">
-            <div className="discussion-header">
-                <span className="discussion-author">User #{discussion.user_id}</span>
+        <div className="discussion-item" style={{
+            background: 'var(--background)',
+            padding: '1.5rem',
+            borderRadius: '8px',
+            border: '1px solid var(--primary-border)'
+        }}>
+            <div className="discussion-header" style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '1rem',
+                fontSize: '0.9rem',
+                color: 'var(--text-gray)'
+            }}>
+                <span className="discussion-author" style={{ fontWeight: 'bold' }}>
+                    User #{discussion.user_id}
+                </span>
                 <span className="discussion-date">
                     {new Date(discussion.posted_at).toLocaleString()}
                 </span>
             </div>
 
             {isEditing ? (
-                <div className="discussion-edit">
+                <div className="discussion-edit" style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1rem'
+                }}>
                     <textarea
                         value={editedMessage}
                         onChange={(e) => setEditedMessage(e.target.value)}
-                        className="discussion-textarea"
+                        style={{
+                            width: '100%',
+                            minHeight: '100px',
+                            padding: '0.75rem',
+                            borderRadius: '6px',
+                            border: '1px solid var(--primary-border)',
+                            background: 'var(--card-bg)',
+                            color: 'var(--foreground)',
+                            fontSize: '1rem',
+                            fontFamily: 'var(--font-roboto)',
+                            resize: 'vertical'
+                        }}
                     />
-                    <div className="discussion-actions">
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                         <Button size="sm" onClick={handleUpdate}>Save</Button>
                         <Button size="sm" color="black" onClick={() => setIsEditing(false)}>Cancel</Button>
                     </div>
                 </div>
             ) : (
                 <>
-                    <p className="discussion-message">{discussion.message}</p>
+                    <p className="discussion-message" style={{
+                        fontSize: '1rem',
+                        lineHeight: '1.6',
+                        marginBottom: canModify ? '1rem' : 0,
+                        color: 'var(--foreground)'
+                    }}>
+                        {discussion.message}
+                    </p>
                     {canModify && (
-                        <div className="discussion-actions">
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                             <Button size="sm" onClick={() => setIsEditing(true)}>Edit</Button>
                             <Button size="sm" color="red" onClick={handleDelete}>Delete</Button>
                         </div>

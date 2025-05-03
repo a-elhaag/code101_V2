@@ -2,23 +2,27 @@ import { useState } from 'react';
 
 export default function Button({ children, color = "white", onClick, size = "md" }) {
     const [isHovered, setIsHovered] = useState(false);
-    
+
     const baseStyle = {
         fontFamily: "var(--font-ibm-plex-mono)",
         fontWeight: "bold",
         borderRadius: "6px",
         cursor: "pointer",
         transition: "all 0.3s ease",
-        padding: size === "md" ? "0.6rem 1.4rem" : "0.4rem 1rem",
-        fontSize: "1rem",
+        padding: size === "sm" ? "0.3rem 0.8rem" : "0.6rem 1.4rem",
+        fontSize: size === "sm" ? "0.875rem" : "1rem",
         boxShadow: isHovered ? "var(--shadow-md)" : "var(--shadow-sm)",
         border: "1px solid transparent",
         position: "relative",
         overflow: "hidden",
-        backgroundColor: color === "black" 
-            ? (isHovered ? "#1a1a1a" : "#000") 
-            : (isHovered ? "rgba(255, 255, 255, 0.9)" : "#fff"),
-        color: color === "black" ? "#fff" : "#000",
+        backgroundColor: color === "black"
+            ? (isHovered ? "#1a1a1a" : "#000")
+            : color === "red"
+                ? (isHovered ? "#d32f2f" : "#f44336")
+                : color === "green"
+                    ? (isHovered ? "#2e7d32" : "#4caf50")
+                    : (isHovered ? "rgba(255, 255, 255, 0.9)" : "#fff"),
+        color: (color === "black" || color === "red" || color === "green") ? "#fff" : "#000",
         transform: isHovered ? "translateY(-2px)" : "none",
     };
 
@@ -67,15 +71,18 @@ export default function Button({ children, color = "white", onClick, size = "md"
                     }
                 }
             `}</style>
-            <button 
-                style={baseStyle} 
+            <button
+                style={{
+                    ...baseStyle,
+                    minWidth: size === "sm" ? "auto" : "80px",
+                }}
                 onClick={onClick}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
                 onMouseDown={(e) => e.currentTarget.style.transform = "scale(0.98)"}
                 onMouseUp={(e) => e.currentTarget.style.transform = isHovered ? "translateY(-2px)" : "none"}
             >
-                {isHovered && <div style={{...shineStyle, transform: "translateX(-100%)"}} />}
+                {isHovered && <div style={{ ...shineStyle, transform: "translateX(-100%)" }} />}
                 {isHovered && <div style={shimmerStyle} />}
                 {children}
             </button>

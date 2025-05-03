@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import Button from "./Button";
 
-export default function UserCard({ user, onResetPassword, onDelete }) {
+export default function UserCard({ user, onResetPassword, onDelete, onRoleChange }) {
     const [isHovered, setIsHovered] = useState(false);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
     const cardRef = useRef(null);
@@ -44,6 +44,15 @@ export default function UserCard({ user, onResetPassword, onDelete }) {
         }
     };
 
+    const getRoleColor = (role) => {
+        switch (role.toLowerCase()) {
+            case 'admin':
+                return '#4CAF50';
+            default:
+                return '#2196F3';
+        }
+    };
+
     return (
         <div
             ref={cardRef}
@@ -62,17 +71,28 @@ export default function UserCard({ user, onResetPassword, onDelete }) {
                 </div>
                 <h2 className="card-title">{user.username}</h2>
                 <p className="card-info">{user.email}</p>
-                <p className="card-role">Role: {user.role}</p>
+                <div className="role-badge" style={{ backgroundColor: getRoleColor(user.role) }}>
+                    {user.role}
+                </div>
             </div>
 
             <div className="card-actions">
                 <Button
+                    size="sm"
+                    color={mounted && currentTheme === "light" ? "black" : "white"}
+                    onClick={() => onRoleChange(user.user_id, user.role === 'admin' ? 'user' : 'admin')}
+                >
+                    {user.role === 'admin' ? 'Remove Admin' : 'Make Admin'}
+                </Button>
+                <Button
+                    size="sm"
                     color={mounted && currentTheme === "light" ? "black" : "white"}
                     onClick={() => onResetPassword(user.user_id, user.username)}
                 >
                     Reset Password
                 </Button>
                 <Button
+                    size="sm"
                     color="red"
                     onClick={() => onDelete(user.user_id)}
                 >
@@ -111,11 +131,11 @@ export default function UserCard({ user, onResetPassword, onDelete }) {
 
                 .user-card.hovered {
                     background: radial-gradient(circle 80px at var(--mouse-x) var(--mouse-y),
-                        var(--primary-color) 0%,
-                        rgba(var(--primary-color-rgb), 0.4) 40%,
+                        var(--color-blue) 0%,
+                        rgba(0, 120, 255, 0.4) 40%,
                         transparent 80%),
                         var(--card-bg);
-                    box-shadow: 0 0 30px rgba(var(--primary-color-rgb), 0.3) inset;
+                    box-shadow: 0 0 30px rgba(0, 120, 255, 0.3) inset;
                     transform: translateY(-5px);
                 }
 
@@ -133,7 +153,7 @@ export default function UserCard({ user, onResetPassword, onDelete }) {
                     width: 80px;
                     height: 80px;
                     border-radius: 50%;
-                    background: var(--primary-gradient);
+                    background: var(--color-blue);
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -141,6 +161,11 @@ export default function UserCard({ user, onResetPassword, onDelete }) {
                     font-weight: bold;
                     color: white;
                     margin-bottom: 1.5rem;
+                    transition: transform 0.3s ease;
+                }
+
+                .user-card.hovered .user-avatar {
+                    transform: scale(1.05);
                 }
 
                 .card-title {
@@ -148,25 +173,48 @@ export default function UserCard({ user, onResetPassword, onDelete }) {
                     font-size: 1.5rem;
                     margin: 0 0 1rem;
                     color: var(--primary-text);
+                    position: relative;
+                }
+
+                .card-title::after {
+                    content: "";
+                    position: absolute;
+                    bottom: -4px;
+                    left: 0;
+                    width: 100%;
+                    height: 2px;
+                    background-color: var(--color-blue);
+                    transform: scaleX(0);
+                    transform-origin: left;
+                    transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+                }
+
+                .user-card.hovered .card-title::after {
+                    transform: scaleX(1);
                 }
 
                 .card-info {
                     font-size: 1rem;
                     color: var(--secondary-text);
-                    margin-bottom: 0.5rem;
+                    margin-bottom: 1rem;
                 }
 
-                .card-role {
-                    font-size: 0.9rem;
-                    color: var(--accent-text);
+                .role-badge {
+                    display: inline-block;
+                    padding: 0.4rem 1rem;
+                    border-radius: 20px;
+                    color: white;
+                    font-size: 0.875rem;
+                    font-weight: bold;
                     text-transform: uppercase;
                     letter-spacing: 1px;
+                    margin-top: 0.5rem;
                 }
 
                 .card-actions {
                     display: flex;
-                    gap: 1rem;
                     flex-direction: column;
+                    gap: 0.75rem;
                 }
 
                 @keyframes fadeIn {

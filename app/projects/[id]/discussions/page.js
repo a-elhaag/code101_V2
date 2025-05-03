@@ -107,7 +107,12 @@ export default function ProjectDiscussions() {
 
     if (loading) {
         return (
-            <div className="discussions-page loading">
+            <div className="discussions-page loading" style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '60vh'
+            }}>
                 <LoadingSpinner size="large" color="blue" />
             </div>
         );
@@ -119,43 +124,105 @@ export default function ProjectDiscussions() {
 
     return (
         <div className="discussions-page">
-            <div className="discussions-header">
-                <h1>{project.name}</h1>
-                <p className="project-owner">by {project.owner}</p>
+            <div className="discussions-header" style={{
+                textAlign: 'center',
+                marginBottom: '2rem',
+                padding: '2rem',
+                background: 'var(--card-bg)',
+                borderRadius: '12px',
+                border: '1px solid var(--primary-border)'
+            }}>
+                <h1 style={{
+                    fontSize: '2.5rem',
+                    color: 'var(--color-blue)',
+                    marginBottom: '0.5rem',
+                    fontFamily: 'var(--font-ibm-plex-mono)'
+                }}>{project.name}</h1>
+                <p className="project-owner" style={{
+                    fontSize: '1.1rem',
+                    color: 'var(--secondary-text)'
+                }}>by {project.owner}</p>
             </div>
 
-            <div className="discussions-content">
-                <div className="new-discussion">
-                    <h2>Add a Comment</h2>
+            <div className="discussions-content" style={{
+                maxWidth: '800px',
+                margin: '0 auto',
+                padding: '0 1rem'
+            }}>
+                <div className="new-discussion" style={{
+                    background: 'var(--card-bg)',
+                    padding: '1.5rem',
+                    borderRadius: '12px',
+                    marginBottom: '2rem',
+                    border: '1px solid var(--primary-border)'
+                }}>
+                    <h2 style={{
+                        fontSize: '1.5rem',
+                        marginBottom: '1rem',
+                        color: 'var(--color-blue)',
+                        fontFamily: 'var(--font-ibm-plex-mono)'
+                    }}>Add a Comment</h2>
                     {user ? (
-                        <form onSubmit={handleSubmit}>
+                        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             <textarea
                                 value={newMessage}
                                 onChange={(e) => setNewMessage(e.target.value)}
                                 placeholder="Write your comment here..."
-                                className="discussion-textarea"
+                                style={{
+                                    width: '100%',
+                                    minHeight: '120px',
+                                    padding: '1rem',
+                                    borderRadius: '8px',
+                                    border: '1px solid var(--primary-border)',
+                                    background: 'var(--background)',
+                                    color: 'var(--foreground)',
+                                    fontSize: '1rem',
+                                    fontFamily: 'var(--font-roboto)',
+                                    resize: 'vertical'
+                                }}
                             />
-                            <Button type="submit">Post Comment</Button>
+                            <Button type="submit" style={{ alignSelf: 'flex-end' }}>Post Comment</Button>
                         </form>
                     ) : (
-                        <p className="signin-prompt">Please sign in to post comments</p>
+                        <p className="signin-prompt" style={{
+                            textAlign: 'center',
+                            color: 'var(--text-gray)',
+                            fontStyle: 'italic'
+                        }}>Please sign in to post comments</p>
                     )}
                 </div>
 
-                <div className="discussions-list">
-                    <h2>Comments ({discussions.length})</h2>
+                <div className="discussions-list" style={{
+                    background: 'var(--card-bg)',
+                    padding: '1.5rem',
+                    borderRadius: '12px',
+                    border: '1px solid var(--primary-border)'
+                }}>
+                    <h2 style={{
+                        fontSize: '1.5rem',
+                        marginBottom: '1.5rem',
+                        color: 'var(--color-blue)',
+                        fontFamily: 'var(--font-ibm-plex-mono)'
+                    }}>Comments ({discussions.length})</h2>
                     {discussions.length === 0 ? (
-                        <p className="no-discussions">No comments yet. Be the first to comment!</p>
+                        <p className="no-discussions" style={{
+                            textAlign: 'center',
+                            color: 'var(--text-gray)',
+                            fontStyle: 'italic',
+                            padding: '2rem 0'
+                        }}>No comments yet. Be the first to comment!</p>
                     ) : (
-                        discussions.map(discussion => (
-                            <Discussion
-                                key={discussion.discussion_id}
-                                discussion={discussion}
-                                currentUser={user}
-                                onUpdate={handleUpdate}
-                                onDelete={handleDelete}
-                            />
-                        ))
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                            {discussions.map(discussion => (
+                                <Discussion
+                                    key={discussion.discussion_id}
+                                    discussion={discussion}
+                                    currentUser={user}
+                                    onUpdate={handleUpdate}
+                                    onDelete={handleDelete}
+                                />
+                            ))}
+                        </div>
                     )}
                 </div>
             </div>

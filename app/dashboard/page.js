@@ -189,8 +189,8 @@ export default function Dashboard() {
                         <Input label="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
                         <Input label="New Password" type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
                         <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: "1rem" }}>
-                            <Button type="submit">Save Changes</Button>
-                            <Button type="button" color="red" onClick={handleDeleteProfile}>Delete Profile</Button>
+                            <Button size="sm" type="submit">Save Changes</Button>
+                            <Button size="sm" type="button" color="red" onClick={handleDeleteProfile}>Delete Profile</Button>
                         </div>
                     </form>
                 </div>
@@ -208,11 +208,36 @@ export default function Dashboard() {
                             {projects.map((project) => (
                                 <div key={project.project_id} style={{ position: "relative" }}>
                                     <ProjectCard project={project} />
-                                    <div className="dashboard-project-status">
-                                        Status: {project.status || "pending"} •
-                                        <button className="delete-btn" onClick={() => handleDeleteProject(project.project_id)}>
+                                    <div className="dashboard-project-status" style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '0.75rem',
+                                        padding: '1rem',
+                                        background: 'var(--card-bg)',
+                                        borderRadius: '0 0 12px 12px',
+                                        border: '1px solid var(--primary-border)',
+                                        borderTop: 'none',
+                                        marginTop: '-5px'
+                                    }}>
+                                        <div className={`status-badge status-${project.status || 'pending'}`} style={{
+                                            display: 'inline-block',
+                                            padding: '0.5rem 1rem',
+                                            borderRadius: '50px',
+                                            textAlign: 'center',
+                                            textTransform: 'uppercase',
+                                            fontSize: '0.8rem',
+                                            fontWeight: 'bold',
+                                            letterSpacing: '1px'
+                                        }}>
+                                            {project.status || "pending"}
+                                        </div>
+                                        <Button
+                                            size="sm"
+                                            color="red"
+                                            onClick={() => handleDeleteProject(project.project_id)}
+                                        >
                                             Delete
-                                        </button>
+                                        </Button>
                                     </div>
                                 </div>
                             ))}
@@ -240,10 +265,49 @@ export default function Dashboard() {
                         ))}
                     </select>
                     <div style={{ textAlign: "center" }}>
-                        <Button type="submit">Submit</Button>
+                        <Button size="sm" type="submit">Submit</Button>
                     </div>
                 </form>
             )}
+
+            <style jsx>{`
+                .dashboard-project-status {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 0.5rem 1rem;
+                    background: var(--card-bg);
+                    border: 1px solid var(--primary-border);
+                    border-top: none;
+                    border-radius: 0 0 12px 12px;
+                    margin-top: -5px;
+                }
+
+                .status-badge {
+                    display: inline-block;
+                    padding: 0.25rem 1rem;
+                    border-radius: 50px;
+                    text-transform: uppercase;
+                    font-size: 0.8rem;
+                    font-weight: bold;
+                    letter-spacing: 1px;
+                }
+
+                .status-pending {
+                    background-color: #ffd700;
+                    color: #000;
+                }
+
+                .status-approved {
+                    background-color: #4CAF50;
+                    color: white;
+                }
+
+                .status-declined {
+                    background-color: #f44336;
+                    color: white;
+                }
+            `}</style>
         </div>
     );
 }

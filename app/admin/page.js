@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import ProjectCard from '../components/ProjectCard';
 import Button from '../components/Button';
 import Alert from '../components/Alert';
+import UserCard from '../components/UserCard';
 import { useRouter } from 'next/navigation';
 
 export default function AdminPage() {
@@ -158,6 +159,30 @@ export default function AdminPage() {
         }
     };
 
+    const updateUserRole = async (userId, newRole) => {
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${userId}?code=${process.env.NEXT_PUBLIC_API_KEY}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    role: newRole
+                })
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || 'Failed to update user role');
+            }
+
+            setUsers(prev => prev.map(u =>
+                u.user_id === userId ? { ...u, role: newRole } : u
+            ));
+            showAlert(`User role updated to ${newRole}`, 'success');
+        } catch (err) {
+            showAlert(err.message, 'error');
+        }
+    };
+
     if (!user) return <p className="auth-redirect">Please sign in to access the admin panel.</p>;
     if (user.role !== 'admin') return <p className="auth-redirect">Access denied. Admin privileges required.</p>;
 
@@ -187,21 +212,50 @@ export default function AdminPage() {
                     {projects.map((project) => (
                         <div key={project.project_id} style={{ position: "relative" }}>
                             <ProjectCard project={project} />
-                            <div className="dashboard-project-status">
-                                Status: <strong>{project.status}</strong>
-                                {project.status === 'pending' && (
-                                    <>
-                                        <Button size="sm" color="black" onClick={() => updateStatus(project.project_id, 'approved')}>
-                                            Approve
-                                        </Button>
-                                        <Button size="sm" color="black" onClick={() => updateStatus(project.project_id, 'declined')}>
-                                            Decline
-                                        </Button>
-                                    </>
-                                )}
-                                <Button size="sm" color="black" onClick={() => deleteProject(project.project_id)}>
-                                    Delete
-                                </Button>
+                            <div className="status-bar" style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '0.75rem',
+                                padding: '1rem',
+                                background: 'var(--card-bg)',
+                                borderRadius: '0 0 12px 12px',
+                                border: '1px solid var(--primary-border)',
+                                borderTop: 'none',
+                                marginTop: '-5px'
+                            }}>
+                                <div className="status-badge" style={{
+                                    display: 'inline-block',
+                                    padding: '0.5rem 1rem',
+                                    borderRadius: '50px',
+                                    textAlign: 'center',
+                                    textTransform: 'uppercase',
+                                    fontSize: '0.8rem',
+                                    fontWeight: 'bold',
+                                    letterSpacing: '1px',
+                                    backgroundColor: project.status === 'approved'
+                                        ? '#4CAF50'
+                                        : project.status === 'declined'
+                                            ? '#f44336'
+                                            : '#ffd700',
+                                    color: project.status === 'pending' ? '#000' : '#fff'
+                                }}>
+                                    {project.status}
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                    {project.status === 'pending' && (
+                                        <>
+                                            <Button size="sm" color="green" onClick={() => updateStatus(project.project_id, 'approved')}>
+                                                Approve
+                                            </Button>
+                                            <Button size="sm" color="red" onClick={() => updateStatus(project.project_id, 'declined')}>
+                                                Decline
+                                            </Button>
+                                        </>
+                                    )}
+                                    <Button size="sm" color="black" onClick={() => deleteProject(project.project_id)}>
+                                        Delete
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -209,19 +263,13 @@ export default function AdminPage() {
             ) : (
                 <div className="admin-users-grid">
                     {users.map((u) => (
-                        <div key={u.user_id} className="user-card">
-                            <h3>{u.username}</h3>
-                            <p>{u.email}</p>
-                            <p>Role: {u.role}</p>
-                            <div className="user-actions">
-                                <Button size="sm" color="black" onClick={() => resetPassword(u.user_id, u.username)}>
-                                    Reset Password
-                                </Button>
-                                <Button size="sm" color="red" onClick={() => deleteUser(u.user_id)}>
-                                    Delete User
-                                </Button>
-                            </div>
-                        </div>
+                        <UserCard
+                            key={u.user_id}
+                            user={u}
+                            onResetPassword={resetPassword}
+                            onDelete={deleteUser}
+                            onRoleChange={updateUserRole}
+                        />
                     ))}
                 </div>
             )}

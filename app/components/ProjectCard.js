@@ -77,14 +77,16 @@ export default function ProjectCard({ project }) {
                 </div>
             </div>
 
-            <div className="card-actions">
+            <div className="card-actions" style={{ display: 'flex', gap: '0.75rem' }}>
                 <Button
+                    size="sm"
                     color={mounted && currentTheme === "light" ? "black" : "white"}
                     onClick={() => github_link && window.open(github_link, "_blank")}
                 >
                     View the repo
                 </Button>
                 <Button
+                    size="sm"
                     color={mounted && currentTheme === "light" ? "black" : "white"}
                     onClick={() => window.location.href = `/projects/${project_id}/discussions`}
                 >

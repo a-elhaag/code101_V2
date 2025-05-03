@@ -9,31 +9,56 @@ export default function Dashboard() {
     const router = useRouter();
     const [user, setUser] = useState(null);
     const [tab, setTab] = useState("profile");
-    const [form, setForm] = useState({ u_name: "", email: "", password: "" });
+    const [form, setForm] = useState({ username: "", email: "", password: "" });
     const [projects, setProjects] = useState([]);
-    const [newProject, setNewProject] = useState({ p_name: '', p_desc: '', github_link: '', categories: '' });
+    const [newProject, setNewProject] = useState({ name: '', description: '', github_link: '', category: '' });
     const [loading, setLoading] = useState(false);
-    const categoriesEnum = ['web', 'AI/ML', 'mobile app', 'desktop', 'cloud', 'software testing'];
+    const categories = ['MOBILE APP', 'WEB', 'AI/ML', 'CYBERSECURITY', 'DATA SCIENCE'];
 
     useEffect(() => {
         const stored = localStorage.getItem('code101-user');
         if (stored) {
             const userData = JSON.parse(stored);
             setUser(userData);
-            setForm({ u_name: userData.u_name || "", email: userData.email, password: "" });
+            setForm({ username: userData.username || "", email: userData.email, password: "" });
         }
     }, []);
 
     useEffect(() => {
         if (!user) return;
         setLoading(true);
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/projects?code=${process.env.NEXT_PUBLIC_API_KEY}`)
-            .then(res => res.json())
-            .then(data => {
-                const myProjects = data.filter(p => p.user_id === user.id);
-                setProjects(myProjects);
-            })
-            .finally(() => setLoading(false));
+
+        const fetchProjects = async () => {
+            try {
+                // Fetch all projects
+                const projectsRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/projects?code=${process.env.NEXT_PUBLIC_API_KEY}`);
+                const projectsData = await projectsRes.json();
+
+                // Filter user's projects
+                const userProjects = projectsData.filter(p => p.user_id === user.user_id);
+
+                // Fetch approvals for these projects
+                const approvalsRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/approvals?code=${process.env.NEXT_PUBLIC_API_KEY}`);
+                const approvalsData = await approvalsRes.json();
+
+                // Combine project data with approvals
+                const projectsWithStatus = userProjects.map(project => {
+                    const approval = approvalsData.find(a => a.project_id === project.project_id);
+                    return {
+                        ...project,
+                        status: approval ? approval.status : 'pending'
+                    };
+                });
+
+                setProjects(projectsWithStatus);
+            } catch (err) {
+                console.error('Error fetching projects:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProjects();
     }, [user]);
 
     const handleUserUpdate = async (e) => {
@@ -42,24 +67,26 @@ export default function Dashboard() {
 
         const payload = {
             email: form.email,
-            u_role: "user",
+            username: form.username,
             ...(form.password && { password: form.password })
         };
 
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${user.id}?code=${process.env.NEXT_PUBLIC_API_KEY}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${user.user_id}?code=${process.env.NEXT_PUBLIC_API_KEY}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
 
-        const data = await res.json();
-        if (res.ok) {
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Update failed");
+
             alert("Profile updated.");
             const updatedUser = { ...user, ...form };
             localStorage.setItem("code101-user", JSON.stringify(updatedUser));
             setUser(updatedUser);
-        } else {
-            alert(data.error || "Failed to update.");
+        } catch (err) {
+            alert(err.message);
         }
     };
 
@@ -70,17 +97,17 @@ export default function Dashboard() {
         if (!confirmed) return;
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${user.id}?code=${process.env.NEXT_PUBLIC_API_KEY}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/${user.user_id}?code=${process.env.NEXT_PUBLIC_API_KEY}`, {
                 method: 'DELETE'
             });
 
-            if (res.ok) {
-                localStorage.removeItem('code101-user');
-                router.push('/');
-            } else {
+            if (!res.ok) {
                 const data = await res.json();
                 throw new Error(data.error || 'Failed to delete profile');
             }
+
+            localStorage.removeItem('code101-user');
+            router.push('/');
         } catch (err) {
             alert(err.message);
         }
@@ -95,9 +122,11 @@ export default function Dashboard() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    ...newProject,
-                    approval: "pending",
-                    user_id: user.id
+                    user_id: user.user_id,
+                    name: newProject.name,
+                    description: newProject.description,
+                    github_link: newProject.github_link,
+                    category: newProject.category
                 })
             });
 
@@ -105,8 +134,17 @@ export default function Dashboard() {
             if (!res.ok) throw new Error(data.error || "Submission failed");
 
             alert("Project submitted!");
-            setNewProject({ p_name: '', p_desc: '', github_link: '', categories: '' });
-            setProjects(prev => [...prev, { ...newProject, approval: "pending", user_id: user.id }]);
+            setNewProject({ name: '', description: '', github_link: '', category: '' });
+
+            // Add new project to list
+            setProjects(prev => [...prev, {
+                ...newProject,
+                project_id: data.project_id,
+                user_id: user.user_id,
+                status: 'pending',
+                created_at: new Date().toISOString()
+            }]);
+
             setTab("projects");
         } catch (err) {
             alert(err.message);
@@ -122,23 +160,15 @@ export default function Dashboard() {
                 method: 'DELETE'
             });
 
-            if (res.ok) {
-                setProjects(prev => prev.filter(p => p.p_id !== projectId));
-            } else {
+            if (!res.ok) {
                 const data = await res.json();
                 throw new Error(data.error || 'Failed to delete project');
             }
+
+            setProjects(prev => prev.filter(p => p.project_id !== projectId));
         } catch (err) {
             alert(err.message);
         }
-    };
-
-    const toggleProjectVisibility = (index) => {
-        setProjects(prev => {
-            const copy = [...prev];
-            copy[index].hidden = !copy[index].hidden;
-            return copy;
-        });
     };
 
     if (!user) return <p className="auth-redirect">Please sign in to access your dashboard.</p>;
@@ -155,7 +185,7 @@ export default function Dashboard() {
                 <div className="dashboard-tab-content">
                     <form onSubmit={handleUserUpdate} className="dashboard-form">
                         <h2 className="page-heading" style={{ fontSize: "1.8rem" }}>Update Profile</h2>
-                        <Input label="Username" value={form.u_name} onChange={e => setForm({ ...form, u_name: e.target.value })} />
+                        <Input label="Username" value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} />
                         <Input label="Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
                         <Input label="New Password" type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} />
                         <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: "1rem" }}>
@@ -175,15 +205,12 @@ export default function Dashboard() {
                         <p>You haven't submitted any projects yet.</p>
                     ) : (
                         <div className="dashboard-projects-grid">
-                            {projects.map((p, i) => (
-                                <div key={i} style={{ position: "relative", opacity: p.hidden ? 0.3 : 1 }}>
-                                    <ProjectCard project={p} />
+                            {projects.map((project) => (
+                                <div key={project.project_id} style={{ position: "relative" }}>
+                                    <ProjectCard project={project} />
                                     <div className="dashboard-project-status">
-                                        Status: {p.approval || "pending"} •
-                                        <button className="hide-btn" onClick={() => toggleProjectVisibility(i)}>
-                                            {p.hidden ? "Unhide" : "Hide"}
-                                        </button>
-                                        <button className="delete-btn" onClick={() => handleDeleteProject(p.p_id)}>
+                                        Status: {project.status || "pending"} •
+                                        <button className="delete-btn" onClick={() => handleDeleteProject(project.project_id)}>
                                             Delete
                                         </button>
                                     </div>
@@ -197,18 +224,18 @@ export default function Dashboard() {
             {tab === "submit" && (
                 <form onSubmit={handleProjectSubmit} className="dashboard-tab-content">
                     <h2 className="page-heading" style={{ fontSize: "1.8rem" }}>Submit a New Project</h2>
-                    <Input label="Project Name" value={newProject.p_name} onChange={e => setNewProject({ ...newProject, p_name: e.target.value })} />
+                    <Input label="Project Name" value={newProject.name} onChange={e => setNewProject({ ...newProject, name: e.target.value })} />
                     <Input label="GitHub Link" value={newProject.github_link} onChange={e => setNewProject({ ...newProject, github_link: e.target.value })} />
-                    <Input label="Description" value={newProject.p_desc} onChange={e => setNewProject({ ...newProject, p_desc: e.target.value })} />
+                    <Input label="Description" value={newProject.description} onChange={e => setNewProject({ ...newProject, description: e.target.value })} />
                     <label style={{ fontFamily: "var(--font-ibm-plex-mono)", margin: "1rem auto 0.5rem", display: "block" }}>Category</label>
                     <select
                         className="styled-input"
                         style={{ width: '100%', maxWidth: '400px', margin: '0 auto 1.5rem', display: 'block' }}
-                        value={newProject.categories}
-                        onChange={(e) => setNewProject({ ...newProject, categories: e.target.value })}
+                        value={newProject.category}
+                        onChange={(e) => setNewProject({ ...newProject, category: e.target.value })}
                     >
                         <option value="">Select a category</option>
-                        {categoriesEnum.map(cat => (
+                        {categories.map(cat => (
                             <option key={cat} value={cat}>{cat}</option>
                         ))}
                     </select>

@@ -37,7 +37,7 @@ export default function ProjectsPage() {
             ) : projects.length > 0 ? (
                 <div className={styles.projectsGrid}>
                     {projects.map((project) => (
-                        <ProjectCard key={project.p_id} project={project} />
+                        <ProjectCard key={project.project_id} project={project} />
                     ))}
                 </div>
             ) : (

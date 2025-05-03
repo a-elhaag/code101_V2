@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Button from "./Button";
 
 export default function ProjectCard({ project }) {
-    const { p_name, user_id, p_desc, github_link } = project;
+    const { name, description, github_link, owner, project_id } = project;
 
     const [isHovered, setIsHovered] = useState(false);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -20,7 +20,7 @@ export default function ProjectCard({ project }) {
                 descriptionRef.current.scrollHeight > descriptionRef.current.clientHeight;
             setIsTruncated(isOverflowing);
         }
-    }, [p_desc]);
+    }, [description]);
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -69,24 +69,28 @@ export default function ProjectCard({ project }) {
             }}
         >
             <div className="card-content">
-                <h2 className="card-title">{p_name}</h2>
-                <p className="card-owner">Submitted by User #{user_id}</p>
+                <h2 className="card-title">{name}</h2>
+                <p className="card-owner">Submitted by {owner}</p>
                 <div className="description-container">
-                    <p className="card-description" ref={descriptionRef}>{p_desc}</p>
+                    <p className="card-description" ref={descriptionRef}>{description}</p>
                     {isTruncated && <span className="ellipsis">...</span>}
                 </div>
             </div>
 
-            <div className="card-action">
+            <div className="card-actions">
                 <Button
                     color={mounted && currentTheme === "light" ? "black" : "white"}
                     onClick={() => github_link && window.open(github_link, "_blank")}
                 >
                     View the repo
                 </Button>
+                <Button
+                    color={mounted && currentTheme === "light" ? "black" : "white"}
+                    onClick={() => window.location.href = `/projects/${project_id}/discussions`}
+                >
+                    Discussions
+                </Button>
             </div>
-
-            
         </div>
     );
 }

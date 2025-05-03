@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import Input from '../components/Input';
 import Button from '../components/Button';
 
-
 export default function SignInPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -25,6 +24,8 @@ export default function SignInPage() {
             if (!res.ok) throw new Error(data.error || "Invalid credentials");
 
             localStorage.setItem('code101-user', JSON.stringify(data.user));
+            // Dispatch auth state change event
+            window.dispatchEvent(new Event('authStateChange'));
             router.push('/dashboard');
         } catch (err) {
             setError(err.message);

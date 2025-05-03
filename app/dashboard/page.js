@@ -202,7 +202,7 @@ export default function Dashboard() {
                     {loading ? (
                         <p>Loading...</p>
                     ) : projects.length === 0 ? (
-                        <p>You haven't submitted any projects yet.</p>
+                        <p>You haven&apos;t submitted any projects yet.</p>
                     ) : (
                         <div className="dashboard-projects-grid">
                             {projects.map((project) => (

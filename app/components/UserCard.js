@@ -21,8 +21,16 @@ export default function UserCard({ user, onResetPassword, onDelete, onRoleChange
             { threshold: 0.1 }
         );
 
-        if (cardRef.current) observer.observe(cardRef.current);
-        return () => cardRef.current && observer.unobserve(cardRef.current);
+        const currentRef = cardRef.current;
+        if (currentRef) {
+            observer.observe(currentRef);
+        }
+
+        return () => {
+            if (currentRef) {
+                observer.unobserve(currentRef);
+            }
+        };
     }, []);
 
     useEffect(() => {

@@ -33,8 +33,16 @@ export default function ProjectCard({ project }) {
             { threshold: 0.1 }
         );
 
-        if (cardRef.current) observer.observe(cardRef.current);
-        return () => cardRef.current && observer.unobserve(cardRef.current);
+        const currentRef = cardRef.current;
+        if (currentRef) {
+            observer.observe(currentRef);
+        }
+
+        return () => {
+            if (currentRef) {
+                observer.unobserve(currentRef);
+            }
+        };
     }, []);
 
     useEffect(() => {
@@ -90,7 +98,7 @@ export default function ProjectCard({ project }) {
                     color={mounted && currentTheme === "light" ? "black" : "white"}
                     onClick={() => window.location.href = `/projects/${project_id}/discussions`}
                 >
-                    Discussions
+                    Discuss
                 </Button>
             </div>
         </div>

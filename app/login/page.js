@@ -4,29 +4,35 @@ import { useRouter } from 'next/navigation';
 import Input from '../components/Input';
 import Button from '../components/Button';
 
-export default function SignInPage() {
+export default function SignUpPage() {
     const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
+    const [u_name, setName] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const router = useRouter();
 
-    const handleSubmit = async (e) => {
+    const handleSignup = async (e) => {
         e.preventDefault();
-        if (!email || !password) return setError("All fields are required");
+        if (!username || !u_name || !email || !password) return setError("All fields required");
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/login?code=${process.env.NEXT_PUBLIC_API_KEY}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users?code=${process.env.NEXT_PUBLIC_API_KEY}`, {
                 method: "POST",
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ 
+                    username,
+                    u_name, 
+                    email, 
+                    password, 
+                    u_role: "user" 
+                })
             });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || "Invalid credentials");
 
-            localStorage.setItem('code101-user', JSON.stringify(data.user));
-            // Dispatch auth state change event
-            window.dispatchEvent(new Event('authStateChange'));
-            router.push('/dashboard');
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Signup failed");
+
+            router.push('/login');
         } catch (err) {
             setError(err.message);
         }
@@ -34,13 +40,15 @@ export default function SignInPage() {
 
     return (
         <div className="auth-page">
-            <form className="form-container" onSubmit={handleSubmit}>
-                <h1 className="page-title">Sign In</h1>
+            <form className="form-container" onSubmit={handleSignup}>
+                <h1 className="page-title">Sign Up</h1>
+                <Input label="Full Name" value={u_name} onChange={e => setName(e.target.value)} />
+                <Input label="Username" value={username} onChange={e => setUsername(e.target.value)} />
                 <Input label="Email" value={email} onChange={e => setEmail(e.target.value)} />
                 <Input label="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
                 {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
                 <div style={{ textAlign: "center" }}>
-                    <Button type="submit">Sign In</Button>
+                    <Button type="submit">Create Account</Button>
                 </div>
             </form>
         </div>
